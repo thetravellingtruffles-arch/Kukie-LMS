@@ -1,0 +1,226 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+  Kükie brand system — derived from the "Kükie Brand Manual & Design System
+  v1.0" (Kitchen Intelligence, Abu Dhabi UAE): Forest Green primary
+  (#183135, 60-70% of every layout), Warm Gold accent (#B59268, used
+  sparingly for emphasis only), Cream Canvas background (#EDE8E4, warm —
+  never cold white). Typography is Georgia throughout — serif, editorial,
+  European, timeless; never sans-serif, never rounded, never tech-startup
+  generic. This module ("Kükie Academy") is the Learning & Development
+  section of Kükie Pro and inherits the parent brand exactly.
+  Functional status colors (success/warning/danger/info) are kept distinct
+  from the brand palette — muted, editorial tones rather than bright SaaS
+  candy colors — purely for dashboard legibility.
+*/
+
+:root {
+  --background: #ede8e4;
+  --surface: #f8f5f1;
+  --surface-muted: #e3dcd3;
+  --foreground: #183135;
+  --muted-foreground: #5c6f70;
+  --border: #dcd3c7;
+  --border-strong: #b7ab9a;
+
+  --brand: #183135;
+  --brand-foreground: #ede8e4;
+  --brand-soft: #e1e6e4;
+
+  --accent-amber: #a97a34;
+  --accent-amber-soft: #f2e6d3;
+  --accent-emerald: #3f6b4f;
+  --accent-emerald-soft: #e6ede7;
+  --accent-rose: #9c5145;
+  --accent-rose-soft: #f2e5e2;
+  --accent-violet: #6b5a72;
+  --accent-violet-soft: #ece8ed;
+  --accent-sky: #3f6d78;
+  --accent-sky-soft: #e3ebec;
+
+  --gold: #b59268;
+  --gold-soft: #f2e9dc;
+
+  --radius: 0.65rem;
+
+  --sidebar: #183135;
+  --sidebar-foreground: #ede8e4;
+  --sidebar-muted: #91a6a3;
+  --sidebar-border: #24474b;
+  --sidebar-active: #b59268;
+  --sidebar-active-foreground: #16292b;
+
+  /* Reserved exclusively for the training calendar's trainer color-coding —
+     not used anywhere else in the brand system. */
+  --trainer-1: #3d5a80;
+  --trainer-2: #a8562f;
+  --trainer-3: #4f7a5c;
+  --trainer-4: #7a5c8a;
+}
+
+.dark {
+  --background: #0f1e20;
+  --surface: #16292c;
+  --surface-muted: #1c3134;
+  --foreground: #ede8e4;
+  --muted-foreground: #9fb0ac;
+  --border: #2a4548;
+  --border-strong: #3d5c5f;
+
+  --brand: #cfa876;
+  --brand-foreground: #16292b;
+  --brand-soft: #23383a;
+
+  --accent-amber: #d8b47f;
+  --accent-amber-soft: #29241a;
+  --accent-emerald: #7fab8d;
+  --accent-emerald-soft: #17241c;
+  --accent-rose: #c68a7d;
+  --accent-rose-soft: #271d1a;
+  --accent-violet: #a597ac;
+  --accent-violet-soft: #221f26;
+  --accent-sky: #7ba7b1;
+  --accent-sky-soft: #172325;
+
+  --gold: #cfa876;
+  --gold-soft: #291f14;
+
+  --sidebar: #102224;
+  --sidebar-foreground: #ede8e4;
+  --sidebar-muted: #7f9793;
+  --sidebar-border: #1c3436;
+  --sidebar-active: #b59268;
+  --sidebar-active-foreground: #16292b;
+
+  --trainer-1: #7d9bc4;
+  --trainer-2: #d68a5c;
+  --trainer-3: #82b191;
+  --trainer-4: #b092bf;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+
+  --color-amber: var(--accent-amber);
+  --color-amber-soft: var(--accent-amber-soft);
+  --color-emerald: var(--accent-emerald);
+  --color-emerald-soft: var(--accent-emerald-soft);
+  --color-rose: var(--accent-rose);
+  --color-rose-soft: var(--accent-rose-soft);
+  --color-violet: var(--accent-violet);
+  --color-violet-soft: var(--accent-violet-soft);
+  --color-sky: var(--accent-sky);
+  --color-sky-soft: var(--accent-sky-soft);
+
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+
+  --color-trainer-1: var(--trainer-1);
+  --color-trainer-2: var(--trainer-2);
+  --color-trainer-3: var(--trainer-3);
+  --color-trainer-4: var(--trainer-4);
+
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.15rem);
+  --radius-xl: calc(var(--radius) + 0.35rem);
+
+  --font-sans: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  --font-arabic: "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Georgia, serif;
+}
+
+::selection {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+
+.glass {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(120%);
+}
+
+.grid-fade {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    var(--border) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+}
+
+/* Thin-rule footer used across presentation slides and formal documents. */
+.brand-footer {
+  border-top: 1px solid currentColor;
+  opacity: 1;
+}
+.brand-footer .brand-footer-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-muted) 25%,
+    var(--border) 37%,
+    var(--surface-muted) 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
