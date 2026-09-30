@@ -403,6 +403,24 @@ export interface Completion {
   staff?: Staff;
 }
 
+// ---------------------------------------------------------------------------
+// Real (Supabase-backed) Course Attachments — trainer resources (SOPs,
+// menus, scripts, reference PDFs) attached to a Module Studio course.
+// Studio itself sits behind login, so these are inherently trainer/admin
+// visible only — never surfaced on the public course-taking pages.
+// ---------------------------------------------------------------------------
+
+export interface CourseAttachment {
+  id: string;
+  courseId: string;
+  fileName: string;
+  filePath: string;
+  fileSize: number | null;
+  contentType: string | null;
+  uploadedBy: string | null;
+  createdAt: string;
+}
+
 export interface Dataset {
   regions: Region[];
   stores: Store[];

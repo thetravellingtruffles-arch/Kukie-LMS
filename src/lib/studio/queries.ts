@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/client";
-import type { Course, CourseMeta, CourseStatus, Pillar, QuizQuestion, Slide, SlideType, QuestionType } from "@/lib/types";
+import type { Course, CourseAttachment, CourseMeta, CourseStatus, Pillar, QuizQuestion, Slide, SlideType, QuestionType } from "@/lib/types";
 
 // ---------------------------------------------------------------------------
 // Row -> app-type mappers
@@ -350,4 +350,66 @@ export async function fetchCourseBundle(slug: string) {
     fetchQuestions(course.id),
   ]);
   return { course, pillars, slides, questions };
+}
+
+// ---------------------------------------------------------------------------
+// Course attachments — trainer resources (Studio is login-gated, so these
+// never reach the public course-taking pages)
+// ---------------------------------------------------------------------------
+
+const ATTACHMENTS_BUCKET = "kukie-academy-attachments";
+
+function dbToAttachment(row: any): CourseAttachment {
+  return {
+    id: row.id,
+    courseId: row.course_id,
+    fileName: row.file_name,
+    filePath: row.file_path,
+    fileSize: row.file_size,
+    contentType: row.content_type,
+    uploadedBy: row.uploaded_by,
+    createdAt: row.created_at,
+  };
+}
+
+export async function fetchAttachments(courseId: string): Promise<CourseAttachment[]> {
+  const { data, error } = await supabase
+    .from("kukie_academy_course_attachments")
+    .select("*")
+    .eq("course_id", courseId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(dbToAttachment);
+}
+
+export async function uploadAttachment(courseId: string, file: File): Promise<CourseAttachment> {
+  const path = `${courseId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+  const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(path, file);
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await supabase
+    .from("kukie_academy_course_attachments")
+    .insert({
+      course_id: courseId,
+      file_name: file.name,
+      file_path: path,
+      file_size: file.size,
+      content_type: file.type || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return dbToAttachment(data);
+}
+
+export async function getAttachmentUrl(filePath: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(ATTACHMENTS_BUCKET).createSignedUrl(filePath, 60 * 10);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function deleteAttachment(attachment: CourseAttachment): Promise<void> {
+  await supabase.storage.from(ATTACHMENTS_BUCKET).remove([attachment.filePath]);
+  const { error } = await supabase.from("kukie_academy_course_attachments").delete().eq("id", attachment.id);
+  if (error) throw error;
 }

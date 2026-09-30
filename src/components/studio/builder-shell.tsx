@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2, FileText, Target, ListChecks, Layers, GalleryHorizontal, HelpCircle,
-  ClipboardCheck, Gauge, Award, Rocket, Check, QrCode,
+  ClipboardCheck, Gauge, Award, Rocket, Check, QrCode, Paperclip,
 } from "lucide-react";
 import { fetchCourseById, fetchPillars, fetchSlides, fetchQuestions } from "@/lib/studio/queries";
 import type { Course, Pillar, QuizQuestion, Slide } from "@/lib/types";
@@ -20,6 +20,7 @@ import { QuestionsSection } from "./sections/questions";
 import { PracticalSection } from "./sections/practical";
 import { ScoringSection } from "./sections/scoring";
 import { CertificationSection } from "./sections/certification";
+import { AttachmentsSection } from "./sections/attachments";
 import { PublishSection } from "./sections/publish";
 
 export type StudioData = {
@@ -45,6 +46,7 @@ const SECTIONS = [
   { id: "practical", label: "Practical Assessment", icon: ClipboardCheck, done: (d: StudioData) => (d.course.meta.practicalAssessment?.criteria?.length ?? 0) > 0 },
   { id: "scoring", label: "Scoring & Pass Standard", icon: Gauge, done: (d: StudioData) => !!d.course.meta.scoring?.passMarkPercent },
   { id: "certification", label: "Certification", icon: Award, done: (d: StudioData) => d.course.meta.certification?.issuesCertificate !== undefined },
+  { id: "attachments", label: "Trainer Resources", icon: Paperclip, done: () => true },
   { id: "publish", label: "Review & Publish", icon: Rocket, done: (d: StudioData) => d.course.status === "published" },
 ] as const;
 
@@ -134,6 +136,7 @@ export function BuilderShell({ courseId }: { courseId: string }) {
         {section === "practical" && <PracticalSection data={data} actions={actions} />}
         {section === "scoring" && <ScoringSection data={data} actions={actions} />}
         {section === "certification" && <CertificationSection data={data} actions={actions} />}
+        {section === "attachments" && <AttachmentsSection data={data} />}
         {section === "publish" && <PublishSection data={data} actions={actions} />}
       </div>
     </div>
