@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +12,7 @@ import { PILLAR_ICONS } from "@/lib/curriculum/icons";
 import { PILLAR_BG_SOFT, PILLAR_TEXT } from "@/lib/curriculum/pillar-colors";
 import { SLIDES, TOTAL_SLIDE_MINUTES } from "@/lib/curriculum/slides";
 import { QUESTIONS } from "@/lib/curriculum/questions";
-import { overallStats } from "@/lib/data";
+import { fetchOrgSnapshot, overallStats, type OrgSnapshot } from "@/lib/rollups";
 import {
   Clock, Signal, Users2, Tag, PlaySquare, NotebookPen, QrCode, ListChecks,
   ClipboardCheck, Award, UserRound,
@@ -27,7 +30,11 @@ const DELIVERABLES = [
 ];
 
 export default function CoursePage() {
-  const stats = overallStats();
+  const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
+  React.useEffect(() => {
+    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
+  }, []);
+  const stats = snap ? overallStats(snap) : null;
 
   return (
     <AppShell title="Course Overview" subtitle="Module 001">
@@ -83,23 +90,23 @@ export default function CoursePage() {
         <Card>
           <CardHeader>
             <CardTitle>Organization Progress</CardTitle>
-            <CardDescription>Across all assigned employees</CardDescription>
+            <CardDescription>Real, org-wide certification data</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div>
               <div className="mb-1.5 flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Compliance</span>
-                <span className="font-semibold">{stats.compliance.toFixed(0)}%</span>
+                <span className="font-semibold">{stats ? `${stats.compliance.toFixed(0)}%` : "…"}</span>
               </div>
-              <Progress value={stats.compliance} />
+              <Progress value={stats?.compliance ?? 0} />
             </div>
             <div className="grid grid-cols-2 gap-2 text-center text-xs">
               <div className="rounded-[10px] bg-emerald-soft p-2.5">
-                <p className="font-display text-base font-bold text-emerald">{stats.completed}</p>
-                <p className="text-emerald/80">Completed</p>
+                <p className="font-display text-base font-bold text-emerald">{stats?.completed ?? "…"}</p>
+                <p className="text-emerald/80">Certified</p>
               </div>
               <div className="rounded-[10px] bg-amber-soft p-2.5">
-                <p className="font-display text-base font-bold text-amber">{stats.inProgress}</p>
+                <p className="font-display text-base font-bold text-amber">{stats?.inProgress ?? "…"}</p>
                 <p className="text-amber/80">In Progress</p>
               </div>
             </div>

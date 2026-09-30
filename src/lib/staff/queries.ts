@@ -157,3 +157,13 @@ export async function fetchAttendanceForCourse(courseSlug: string): Promise<Staf
   if (error) throw error;
   return (data ?? []).map(dbToAttendance);
 }
+
+/** All attendance sessions, across every course — used by org-wide rollups. */
+export async function fetchAllAttendance(): Promise<StaffAttendanceRecord[]> {
+  const { data, error } = await supabase
+    .from("kukie_academy_attendance")
+    .select("*, staff:kukie_academy_staff(*)")
+    .order("checked_in_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(dbToAttendance);
+}

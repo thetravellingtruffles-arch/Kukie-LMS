@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { KukieLogo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { overallStats } from "@/lib/data";
+import { fetchOrgSnapshot, overallStats, type OrgSnapshot } from "@/lib/rollups";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -29,7 +29,12 @@ function LoginForm() {
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const stats = overallStats();
+  const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
+
+  React.useEffect(() => {
+    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
+  }, []);
+  const stats = snap ? overallStats(snap) : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,9 +76,9 @@ function LoginForm() {
           </p>
 
           <div className="mt-10 grid grid-cols-3 gap-4">
-            <StatChip icon={Users2} value={`${stats.assigned}`} label="Employees" />
-            <StatChip icon={ShieldCheck} value={`${stats.compliance.toFixed(0)}%`} label="Compliance" />
-            <StatChip icon={TrendingUp} value="+8.4%" label="ATV Lift" />
+            <StatChip icon={Users2} value={stats ? `${stats.assigned}` : "…"} label="Employees" />
+            <StatChip icon={ShieldCheck} value={stats ? `${stats.compliance.toFixed(0)}%` : "…"} label="Compliance" />
+            <StatChip icon={TrendingUp} value={stats ? `${stats.certificates}` : "…"} label="Certificates" />
           </div>
         </motion.div>
 
