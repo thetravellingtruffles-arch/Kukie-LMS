@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { StatCard } from "@/components/dashboard/stat-card";
 import { TrendLine } from "@/components/charts/trend-line";
 import { BarCompare } from "@/components/charts/bar-compare";
-import { fetchOrgSnapshot, overallStats, trainerSummaries, managerSummaries, type OrgSnapshot } from "@/lib/rollups";
+import { fetchOrgSnapshot, overallStats, trainerSummaries, managerSummaries, scopeSnapshot, type OrgSnapshot } from "@/lib/rollups";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 
 function bucketize(values: number[], edges: number[], labels: string[]) {
   const counts = Array(labels.length).fill(0);
@@ -25,11 +26,13 @@ function bucketize(values: number[], edges: number[], labels: string[]) {
 }
 
 export default function AnalyticsPage() {
+  const scope = useAccessScope();
   const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
 
   React.useEffect(() => {
-    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
-  }, []);
+    if (scope.loading) return;
+    fetchOrgSnapshot().then((s) => setSnap(scopeSnapshot(s, scope.storeIds))).catch(() => setSnap(null));
+  }, [scope.loading, scope.storeIds]);
 
   if (!snap) {
     return (

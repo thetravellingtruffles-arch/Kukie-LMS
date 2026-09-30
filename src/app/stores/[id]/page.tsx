@@ -9,16 +9,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { ProgressRing } from "@/components/dashboard/progress-ring";
-import { fetchOrgSnapshot, storeSummary, type OrgSnapshot } from "@/lib/rollups";
+import { fetchOrgSnapshot, storeSummary, scopeSnapshot, type OrgSnapshot } from "@/lib/rollups";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 
 export default function StoreDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const scope = useAccessScope();
   const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
 
   React.useEffect(() => {
-    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
-  }, []);
+    if (scope.loading) return;
+    fetchOrgSnapshot().then((s) => setSnap(scopeSnapshot(s, scope.storeIds))).catch(() => setSnap(null));
+  }, [scope.loading, scope.storeIds]);
 
   if (!snap) {
     return (

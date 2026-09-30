@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { FileText, FileSpreadsheet, FileDown, Presentation, CheckCircle2, Loader2 } from "lucide-react";
-import { fetchOrgSnapshot, overallStats, storeSummary } from "@/lib/rollups";
+import { fetchOrgSnapshot, overallStats, storeSummary, scopeSnapshot } from "@/lib/rollups";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +21,13 @@ function downloadBlob(data: BlobPart, filename: string, type: string) {
 }
 
 export function ReportsClient() {
+  const scope = useAccessScope();
   const [busy, setBusy] = React.useState<ReportKey | null>(null);
   const [done, setDone] = React.useState<ReportKey[]>([]);
 
   async function withData<T>(fn: (data: { snap: Awaited<ReturnType<typeof fetchOrgSnapshot>>; stats: ReturnType<typeof overallStats>; summaries: ReturnType<typeof storeSummary>[] }) => Promise<T>) {
-    const snap = await fetchOrgSnapshot();
+    const full = await fetchOrgSnapshot();
+    const snap = scopeSnapshot(full, scope.storeIds);
     const stats = overallStats(snap);
     const summaries = snap.stores.map((s) => storeSummary(snap, s.id));
     return fn({ snap, stats, summaries });

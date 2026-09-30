@@ -11,21 +11,30 @@ import { fetchStaffById } from "@/lib/staff/queries";
 import { fetchCompletionsForStaff, isCertificateValid, isCertificateExpiringSoon } from "@/lib/completions/queries";
 import type { Staff, Completion } from "@/lib/types";
 import { initials } from "@/lib/utils";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 
 export default function EmployeeProfilePage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
+  const scope = useAccessScope();
   const [staff, setStaff] = React.useState<Staff | null | undefined>(undefined);
   const [completions, setCompletions] = React.useState<Completion[]>([]);
 
   React.useEffect(() => {
+    if (scope.loading) return;
     fetchStaffById(id).then((s) => {
+      // Enforce the same scoping as every other dashboard: a store-scoped
+      // role can't view a staff profile outside their assigned stores.
+      if (s && scope.storeIds !== "all" && (!s.storeId || !scope.storeIds.includes(s.storeId))) {
+        setStaff(null);
+        return;
+      }
       setStaff(s);
       if (s) fetchCompletionsForStaff(s.id).then(setCompletions);
     }).catch(() => setStaff(null));
-  }, [id]);
+  }, [id, scope.loading, scope.storeIds]);
 
-  if (staff === undefined) {
+  if (staff === undefined || scope.loading) {
     return (
       <AppShell title="Employee Profile" subtitle="Loading…">
         <div className="flex items-center justify-center gap-2 py-24 text-sm text-muted-foreground">

@@ -34,6 +34,28 @@ export async function fetchOrgSnapshot(): Promise<OrgSnapshot> {
   return { staff, stores, regions, managers, trainers, completions, attendance };
 }
 
+/**
+ * Filters a full org snapshot down to what a scoped role (operations,
+ * area_manager) is allowed to see, given the store ids resolved by
+ * useAccessScope(). Pass storeIds="all" for admin/vp — returns the snapshot
+ * unchanged. Every dashboard page should run its snapshot through this
+ * before computing stats, so role scoping is enforced in exactly one place.
+ */
+export function scopeSnapshot(snap: OrgSnapshot, storeIds: "all" | string[]): OrgSnapshot {
+  if (storeIds === "all") return snap;
+  const allowed = new Set(storeIds);
+  const stores = snap.stores.filter((s) => allowed.has(s.id));
+  const staff = snap.staff.filter((s) => s.storeId && allowed.has(s.storeId));
+  const staffIds = new Set(staff.map((s) => s.id));
+  const completions = snap.completions.filter((c) => staffIds.has(c.staffId));
+  const attendance = snap.attendance.filter((a) => staffIds.has(a.staffId));
+  const managers = snap.managers.filter((m) => m.storeId && allowed.has(m.storeId));
+  const regionIds = new Set(stores.map((s) => s.regionId).filter((r): r is string => !!r));
+  const regions = snap.regions.filter((r) => regionIds.has(r.id));
+  const trainers = snap.trainers.filter((t) => t.regionId && regionIds.has(t.regionId));
+  return { stores, staff, completions, attendance, managers, regions, trainers };
+}
+
 function avg(nums: number[]): number {
   if (!nums.length) return 0;
   return nums.reduce((s, n) => s + n, 0) / nums.length;

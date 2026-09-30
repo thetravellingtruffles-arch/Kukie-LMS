@@ -309,6 +309,14 @@ export interface StaffAttendanceRecord {
 
 export type OrgStatus = "active" | "inactive";
 
+export interface Brand {
+  id: string;
+  code: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface OrgRegion {
   id: string;
   code: string;
@@ -323,6 +331,7 @@ export interface OrgStore {
   name: string;
   city: string | null;
   regionId: string | null;
+  brandId: string | null;
   format: string | null;
   openedYear: number | null;
   status: OrgStatus;

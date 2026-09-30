@@ -9,14 +9,17 @@ import { ProgressRing } from "@/components/dashboard/progress-ring";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BarCompare } from "@/components/charts/bar-compare";
-import { fetchOrgSnapshot, overallStats, storeSummary, type OrgSnapshot } from "@/lib/rollups";
+import { fetchOrgSnapshot, overallStats, storeSummary, scopeSnapshot, type OrgSnapshot } from "@/lib/rollups";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 
 export default function DashboardPage() {
+  const scope = useAccessScope();
   const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
 
   React.useEffect(() => {
-    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
-  }, []);
+    if (scope.loading) return;
+    fetchOrgSnapshot().then((s) => setSnap(scopeSnapshot(s, scope.storeIds))).catch(() => setSnap(null));
+  }, [scope.loading, scope.storeIds]);
 
   if (!snap) {
     return (

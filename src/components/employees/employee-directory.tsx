@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
-import { fetchOrgSnapshot, type OrgSnapshot } from "@/lib/rollups";
+import { fetchOrgSnapshot, scopeSnapshot, type OrgSnapshot } from "@/lib/rollups";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -27,14 +28,16 @@ const STATUS_LABEL: Record<CompletionStatus, string> = {
 };
 
 export function EmployeeDirectory() {
+  const scope = useAccessScope();
   const [snap, setSnap] = React.useState<OrgSnapshot | null>(null);
   const [query, setQuery] = React.useState("");
   const [storeId, setStoreId] = React.useState<string>("all");
   const [status, setStatus] = React.useState<string>("all");
 
   React.useEffect(() => {
-    fetchOrgSnapshot().then(setSnap).catch(() => setSnap(null));
-  }, []);
+    if (scope.loading) return;
+    fetchOrgSnapshot().then((s) => setSnap(scopeSnapshot(s, scope.storeIds))).catch(() => setSnap(null));
+  }, [scope.loading, scope.storeIds]);
 
   const rows = React.useMemo(() => {
     if (!snap) return [];

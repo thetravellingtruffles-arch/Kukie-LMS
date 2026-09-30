@@ -4,6 +4,8 @@ import * as React from "react";
 import { Search, Loader2, Plus, Award, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { fetchCompletions, isCertificateValid, isCertificateExpiringSoon } from "@/lib/completions/queries";
 import type { Completion } from "@/lib/types";
+import { useAccessScope } from "@/lib/access/use-access-scope";
+import { fetchStaff } from "@/lib/staff/queries";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,18 +15,27 @@ import { initials } from "@/lib/utils";
 import { LogCompletionDialog } from "./log-completion-dialog";
 
 export function TrainingRecordsClient() {
+  const scope = useAccessScope();
   const [completions, setCompletions] = React.useState<Completion[] | null>(null);
   const [query, setQuery] = React.useState("");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Completion | null>(null);
 
   const refresh = React.useCallback(async () => {
-    setCompletions(await fetchCompletions());
-  }, []);
+    const all = await fetchCompletions();
+    if (scope.storeIds === "all") {
+      setCompletions(all);
+      return;
+    }
+    const staff = await fetchStaff();
+    const allowedStaffIds = new Set(staff.filter((s) => s.storeId && (scope.storeIds as string[]).includes(s.storeId)).map((s) => s.id));
+    setCompletions(all.filter((c) => allowedStaffIds.has(c.staffId)));
+  }, [scope.storeIds]);
 
   React.useEffect(() => {
+    if (scope.loading) return;
     refresh();
-  }, [refresh]);
+  }, [scope.loading, refresh]);
 
   const rows = React.useMemo(() => {
     if (!completions) return [];

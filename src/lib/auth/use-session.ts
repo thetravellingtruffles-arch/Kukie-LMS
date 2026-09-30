@@ -4,7 +4,7 @@ import * as React from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 
-export type UserRole = "admin" | "trainer";
+export type UserRole = "admin" | "trainer" | "vp" | "operations" | "area_manager" | "studio_editor";
 
 export interface Profile {
   id: string;

@@ -14,20 +14,29 @@ import { initials } from "@/lib/utils";
 import { AddStaffDialog } from "./add-staff-dialog";
 import { EditStaffDialog } from "./edit-staff-dialog";
 import { StaffBadge } from "./staff-badge";
+import { useAccessScope } from "@/lib/access/use-access-scope";
 
 export function StaffDirectory() {
+  const scope = useAccessScope();
   const [staff, setStaff] = React.useState<Staff[] | null>(null);
   const [query, setQuery] = React.useState("");
   const [badgeFor, setBadgeFor] = React.useState<Staff | null>(null);
   const [editFor, setEditFor] = React.useState<Staff | null>(null);
 
   const refresh = React.useCallback(async () => {
-    setStaff(await fetchStaff());
-  }, []);
+    const all = await fetchStaff();
+    if (scope.storeIds === "all") {
+      setStaff(all);
+      return;
+    }
+    const allowed = new Set(scope.storeIds);
+    setStaff(all.filter((s) => s.storeId && allowed.has(s.storeId)));
+  }, [scope.storeIds]);
 
   React.useEffect(() => {
+    if (scope.loading) return;
     refresh();
-  }, [refresh]);
+  }, [scope.loading, refresh]);
 
   const rows = React.useMemo(() => {
     if (!staff) return [];

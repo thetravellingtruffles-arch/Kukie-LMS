@@ -1,15 +1,50 @@
 import { supabase } from "@/lib/supabase/client";
-import type { OrgRegion, OrgStore, OrgManager, OrgTrainer, OrgStatus } from "@/lib/types";
+import type { Brand, OrgRegion, OrgStore, OrgManager, OrgTrainer, OrgStatus } from "@/lib/types";
 
+function dbToBrand(row: any): Brand {
+  return { id: row.id, code: row.code, name: row.name, createdAt: row.created_at, updatedAt: row.updated_at };
+}
 function dbToRegion(row: any): OrgRegion {
   return { id: row.id, code: row.code, name: row.name, createdAt: row.created_at, updatedAt: row.updated_at };
 }
 function dbToStore(row: any): OrgStore {
   return {
-    id: row.id, code: row.code, name: row.name, city: row.city, regionId: row.region_id,
+    id: row.id, code: row.code, name: row.name, city: row.city, regionId: row.region_id, brandId: row.brand_id,
     format: row.format, openedYear: row.opened_year, status: row.status,
     createdAt: row.created_at, updatedAt: row.updated_at,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Brands
+// ---------------------------------------------------------------------------
+
+export async function fetchBrands(): Promise<Brand[]> {
+  const { data, error } = await supabase.from("kukie_academy_brands").select("*").order("name");
+  if (error) throw error;
+  return (data ?? []).map(dbToBrand);
+}
+
+export async function createBrand(input: { code: string; name: string }): Promise<Brand> {
+  const { data, error } = await supabase.from("kukie_academy_brands").insert({ code: input.code, name: input.name }).select().single();
+  if (error) throw error;
+  return dbToBrand(data);
+}
+
+export async function updateBrand(id: string, patch: Partial<{ name: string; code: string }>): Promise<Brand> {
+  const { data, error } = await supabase
+    .from("kukie_academy_brands")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return dbToBrand(data);
+}
+
+export async function deleteBrand(id: string): Promise<void> {
+  const { error } = await supabase.from("kukie_academy_brands").delete().eq("id", id);
+  if (error) throw error;
 }
 function dbToManager(row: any): OrgManager {
   return {
@@ -61,6 +96,7 @@ export interface NewStoreInput {
   name: string;
   city?: string;
   regionId?: string | null;
+  brandId?: string | null;
   format?: string;
   openedYear?: number;
 }
@@ -70,7 +106,7 @@ export async function createStore(input: NewStoreInput): Promise<OrgStore> {
     .from("kukie_academy_stores")
     .insert({
       code: input.code, name: input.name, city: input.city ?? null, region_id: input.regionId ?? null,
-      format: input.format ?? null, opened_year: input.openedYear ?? null, status: "active",
+      brand_id: input.brandId ?? null, format: input.format ?? null, opened_year: input.openedYear ?? null, status: "active",
     })
     .select()
     .single();
@@ -79,12 +115,13 @@ export async function createStore(input: NewStoreInput): Promise<OrgStore> {
 }
 
 export async function updateStore(id: string, patch: Partial<{
-  name: string; city: string | null; regionId: string | null; format: string | null; openedYear: number | null; status: OrgStatus;
+  name: string; city: string | null; regionId: string | null; brandId: string | null; format: string | null; openedYear: number | null; status: OrgStatus;
 }>): Promise<OrgStore> {
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.name !== undefined) payload.name = patch.name;
   if (patch.city !== undefined) payload.city = patch.city;
   if (patch.regionId !== undefined) payload.region_id = patch.regionId;
+  if (patch.brandId !== undefined) payload.brand_id = patch.brandId;
   if (patch.format !== undefined) payload.format = patch.format;
   if (patch.openedYear !== undefined) payload.opened_year = patch.openedYear;
   if (patch.status !== undefined) payload.status = patch.status;
