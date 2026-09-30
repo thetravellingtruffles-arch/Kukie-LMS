@@ -4,23 +4,29 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useSession } from "@/lib/auth/use-session";
+import type { UserRole } from "@/lib/auth/use-session";
 
-// Nav already hides admin-only sections from Trainers, but that alone
-// doesn't stop someone from typing the URL directly — this is the
-// client-side backstop. The real enforcement is still the RLS policies on
-// each table (a Trainer session can't read/write admin-only data even if
-// they reach the page), this just avoids showing them an empty/broken page.
-export function RequireAdmin({ children }: { children: React.ReactNode }) {
+// Nav already hides sections a role can't see, but that alone doesn't stop
+// someone from typing the URL directly — this is the client-side backstop.
+// The real enforcement is still RLS + the app-layer scope filtering in
+// useAccessScope() on each data query; this just avoids showing a broken or
+// out-of-scope page.
+export function RequireRole({ roles, children }: { roles: UserRole[]; children: React.ReactNode }) {
   const router = useRouter();
   const { profile, loading } = useSession();
 
-  React.useEffect(() => {
-    if (!loading && profile && profile.role !== "admin") {
-      router.replace("/dashboard");
-    }
-  }, [loading, profile, router]);
+  const allowed = !!profile && !!profile.role && roles.includes(profile.role);
 
-  if (loading || !profile || profile.role !== "admin") {
+  React.useEffect(() => {
+    if (loading || !profile) return;
+    if (!allowed) {
+      // Studio-only roles land on /studio, everyone else falls back to /dashboard.
+      const fallback = profile.role === "studio_editor" ? "/studio" : "/dashboard";
+      router.replace(fallback);
+    }
+  }, [loading, profile, allowed, router]);
+
+  if (loading || !profile || !allowed) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
@@ -29,4 +35,9 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   }
 
   return <>{children}</>;
+}
+
+// Back-compat alias for the previous strict admin-only gate.
+export function RequireAdmin({ children }: { children: React.ReactNode }) {
+  return <RequireRole roles={["admin"]}>{children}</RequireRole>;
 }

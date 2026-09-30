@@ -1,29 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Plus, Trash2, Map, Store, Users2, IdCard } from "lucide-react";
+import { Loader2, Plus, Trash2, Map, Store, Users2, IdCard, Building2, ShieldCheck } from "lucide-react";
 import {
   fetchRegions, createRegion, deleteRegion,
   fetchStores, createStore, deleteStore,
   fetchTrainers, createTrainer, deleteTrainer,
   fetchManagers, createManager, deleteManager,
+  fetchBrands, createBrand, deleteBrand,
 } from "@/lib/org/queries";
-import type { OrgRegion, OrgStore, OrgTrainer, OrgManager } from "@/lib/types";
+import type { OrgRegion, OrgStore, OrgTrainer, OrgManager, Brand } from "@/lib/types";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UsersPanel } from "./users-panel";
 
 export function OrganizationClient() {
+  const [brands, setBrands] = React.useState<Brand[] | null>(null);
   const [regions, setRegions] = React.useState<OrgRegion[] | null>(null);
   const [stores, setStores] = React.useState<OrgStore[] | null>(null);
   const [trainers, setTrainers] = React.useState<OrgTrainer[] | null>(null);
   const [managers, setManagers] = React.useState<OrgManager[] | null>(null);
 
   const refreshAll = React.useCallback(async () => {
-    const [r, s, t, m] = await Promise.all([fetchRegions(), fetchStores(), fetchTrainers(), fetchManagers()]);
+    const [b, r, s, t, m] = await Promise.all([fetchBrands(), fetchRegions(), fetchStores(), fetchTrainers(), fetchManagers()]);
+    setBrands(b);
     setRegions(r);
     setStores(s);
     setTrainers(t);
@@ -37,17 +41,22 @@ export function OrganizationClient() {
   return (
     <Tabs defaultValue="stores">
       <TabsList>
+        <TabsTrigger value="brands"><Building2 className="size-3.5" /> Brands</TabsTrigger>
         <TabsTrigger value="regions"><Map className="size-3.5" /> Regions</TabsTrigger>
         <TabsTrigger value="stores"><Store className="size-3.5" /> Stores</TabsTrigger>
         <TabsTrigger value="trainers"><Users2 className="size-3.5" /> Trainers</TabsTrigger>
         <TabsTrigger value="managers"><IdCard className="size-3.5" /> Managers</TabsTrigger>
+        <TabsTrigger value="users"><ShieldCheck className="size-3.5" /> Users & Access</TabsTrigger>
       </TabsList>
 
+      <TabsContent value="brands">
+        <BrandsPanel brands={brands} onChanged={() => fetchBrands().then(setBrands)} />
+      </TabsContent>
       <TabsContent value="regions">
         <RegionsPanel regions={regions} onChanged={() => fetchRegions().then(setRegions)} />
       </TabsContent>
       <TabsContent value="stores">
-        <StoresPanel stores={stores} regions={regions ?? []} onChanged={() => fetchStores().then(setStores)} />
+        <StoresPanel stores={stores} regions={regions ?? []} brands={brands ?? []} onChanged={() => fetchStores().then(setStores)} />
       </TabsContent>
       <TabsContent value="trainers">
         <TrainersPanel trainers={trainers} regions={regions ?? []} onChanged={() => fetchTrainers().then(setTrainers)} />
@@ -55,7 +64,59 @@ export function OrganizationClient() {
       <TabsContent value="managers">
         <ManagersPanel managers={managers} stores={stores ?? []} onChanged={() => fetchManagers().then(setManagers)} />
       </TabsContent>
+      <TabsContent value="users">
+        <UsersPanel brands={brands ?? []} regions={regions ?? []} />
+      </TabsContent>
     </Tabs>
+  );
+}
+
+function BrandsPanel({ brands, onChanged }: { brands: Brand[] | null; onChanged: () => void }) {
+  const [code, setCode] = React.useState("");
+  const [name, setName] = React.useState("");
+  const [saving, setSaving] = React.useState(false);
+
+  async function add() {
+    if (!code.trim() || !name.trim()) return;
+    setSaving(true);
+    try {
+      await createBrand({ code: code.trim(), name: name.trim() });
+      setCode(""); setName("");
+      onChanged();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <p className="mb-3 text-xs text-muted-foreground">
+          Every store belongs to a brand. Operations-role users are granted access to specific brands here, on the Users & Access tab.
+        </p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Code (e.g. indpt)" className="w-40" />
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Brand name" className="w-56" />
+          <Button size="sm" onClick={add} disabled={saving || !code.trim() || !name.trim()}>
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Add Brand
+          </Button>
+        </div>
+        {brands === null ? <Loading /> : brands.length === 0 ? (
+          <EmptyRow text="No brands yet." />
+        ) : (
+          <ul className="flex flex-col gap-1.5">
+            {brands.map((b) => (
+              <li key={b.id} className="flex items-center justify-between rounded-[10px] bg-surface-muted px-3 py-2 text-sm">
+                <div><span className="font-medium">{b.name}</span> <span className="ml-1.5 font-mono text-xs text-muted-foreground">{b.code}</span></div>
+                <Button variant="ghost" size="sm" onClick={async () => { await deleteBrand(b.id); onChanged(); }}>
+                  <Trash2 className="size-3.5 text-rose" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -109,19 +170,26 @@ function RegionsPanel({ regions, onChanged }: { regions: OrgRegion[] | null; onC
   );
 }
 
-function StoresPanel({ stores, regions, onChanged }: { stores: OrgStore[] | null; regions: OrgRegion[]; onChanged: () => void }) {
+function StoresPanel({ stores, regions, brands, onChanged }: { stores: OrgStore[] | null; regions: OrgRegion[]; brands: Brand[]; onChanged: () => void }) {
   const [code, setCode] = React.useState("");
   const [name, setName] = React.useState("");
   const [city, setCity] = React.useState("");
   const [regionId, setRegionId] = React.useState<string>("none");
+  const [brandId, setBrandId] = React.useState<string>("none");
   const [saving, setSaving] = React.useState(false);
 
   async function add() {
     if (!code.trim() || !name.trim()) return;
     setSaving(true);
     try {
-      await createStore({ code: code.trim(), name: name.trim(), city: city.trim() || undefined, regionId: regionId === "none" ? null : regionId });
-      setCode(""); setName(""); setCity(""); setRegionId("none");
+      await createStore({
+        code: code.trim(),
+        name: name.trim(),
+        city: city.trim() || undefined,
+        regionId: regionId === "none" ? null : regionId,
+        brandId: brandId === "none" ? null : brandId,
+      });
+      setCode(""); setName(""); setCity(""); setRegionId("none"); setBrandId("none");
       onChanged();
     } finally {
       setSaving(false);
@@ -142,6 +210,13 @@ function StoresPanel({ stores, regions, onChanged }: { stores: OrgStore[] | null
               {regions.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={brandId} onValueChange={setBrandId}>
+            <SelectTrigger className="w-40"><SelectValue placeholder="Brand" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No brand</SelectItem>
+              {brands.map((b) => <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Button size="sm" onClick={add} disabled={saving || !code.trim() || !name.trim()}>
             {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Plus className="size-3.5" />} Add Store
           </Button>
@@ -152,6 +227,7 @@ function StoresPanel({ stores, regions, onChanged }: { stores: OrgStore[] | null
           <ul className="flex flex-col gap-1.5">
             {stores.map((s) => {
               const region = regions.find((r) => r.id === s.regionId);
+              const brand = brands.find((b) => b.id === s.brandId);
               return (
                 <li key={s.id} className="flex items-center justify-between rounded-[10px] bg-surface-muted px-3 py-2 text-sm">
                   <div className="flex items-center gap-2">
@@ -159,6 +235,7 @@ function StoresPanel({ stores, regions, onChanged }: { stores: OrgStore[] | null
                     <span className="font-mono text-xs text-muted-foreground">{s.code}</span>
                     {s.city && <span className="text-xs text-muted-foreground">· {s.city}</span>}
                     {region && <Badge variant="secondary">{region.name}</Badge>}
+                    {brand && <Badge variant="outline">{brand.name}</Badge>}
                   </div>
                   <Button variant="ghost" size="sm" onClick={async () => { await deleteStore(s.id); onChanged(); }}>
                     <Trash2 className="size-3.5 text-rose" />

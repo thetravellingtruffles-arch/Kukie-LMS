@@ -1,5 +1,5 @@
-import { RequireAdmin } from "@/components/auth/require-admin";
+import { RequireRole } from "@/components/auth/require-admin";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <RequireAdmin>{children}</RequireAdmin>;
+  return <RequireRole roles={["admin", "studio_editor"]}>{children}</RequireRole>;
 }

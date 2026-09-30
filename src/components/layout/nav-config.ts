@@ -5,13 +5,20 @@ import {
   LineChart, TrendingUp, FileOutput, CalendarPlus, CalendarDays, LayoutTemplate,
   Building2,
 } from "lucide-react";
+import type { UserRole } from "@/lib/auth/use-session";
 
 export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  adminOnly?: boolean;
+  /** Omit to show to every signed-in role. Set to restrict to specific roles. */
+  roles?: UserRole[];
 }
+
+// Reused role sets, matching the layout.tsx gates on each route.
+const INSIGHTS_ROLES: UserRole[] = ["vp", "operations", "area_manager"];
+const STUDIO_ROLES: UserRole[] = ["admin", "studio_editor"];
+const ORG_ROLES: UserRole[] = ["admin"];
 
 export interface NavGroup {
   label: string;
@@ -40,7 +47,7 @@ export const NAV: NavGroup[] = [
   {
     label: "Module Studio",
     items: [
-      { label: "All Modules", href: "/studio", icon: LayoutTemplate, adminOnly: true },
+      { label: "All Modules", href: "/studio", icon: LayoutTemplate, roles: STUDIO_ROLES },
     ],
   },
   {
@@ -53,7 +60,7 @@ export const NAV: NavGroup[] = [
   {
     label: "People & Stores",
     items: [
-      { label: "Organization Setup", href: "/organization", icon: Building2, adminOnly: true },
+      { label: "Organization Setup", href: "/organization", icon: Building2, roles: ORG_ROLES },
       { label: "Staff Directory", href: "/staff", icon: QrCode },
       { label: "Training Records", href: "/training", icon: ClipboardCheck },
       { label: "Employee Profiles", href: "/employees", icon: IdCard },
@@ -63,11 +70,11 @@ export const NAV: NavGroup[] = [
   {
     label: "Insights",
     items: [
-      { label: "Regional Dashboard", href: "/regional", icon: Map, adminOnly: true },
-      { label: "Executive Dashboard", href: "/executive", icon: BarChart3, adminOnly: true },
-      { label: "Analytics", href: "/analytics", icon: LineChart, adminOnly: true },
-      { label: "Sales Impact", href: "/sales-impact", icon: TrendingUp, adminOnly: true },
-      { label: "Reports", href: "/reports", icon: FileOutput, adminOnly: true },
+      { label: "Regional Dashboard", href: "/regional", icon: Map, roles: INSIGHTS_ROLES },
+      { label: "Executive Dashboard", href: "/executive", icon: BarChart3, roles: INSIGHTS_ROLES },
+      { label: "Analytics", href: "/analytics", icon: LineChart, roles: INSIGHTS_ROLES },
+      { label: "Sales Impact", href: "/sales-impact", icon: TrendingUp, roles: INSIGHTS_ROLES },
+      { label: "Reports", href: "/reports", icon: FileOutput, roles: INSIGHTS_ROLES },
     ],
   },
 ];

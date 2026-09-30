@@ -15,6 +15,15 @@ function initials(name: string) {
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  vp: "VP",
+  operations: "Operations",
+  area_manager: "Area Manager",
+  studio_editor: "Studio Editor",
+  trainer: "Trainer",
+};
+
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
   const { profile, signOut } = useSession();
   const displayName = profile?.fullName || profile?.email || "Signed in";
@@ -46,7 +55,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
         <DropdownMenuContent align="end">
           <DropdownMenuLabel className="truncate">{displayName}</DropdownMenuLabel>
           <div className="px-2.5 pb-2">
-            <Badge variant="default">{profile?.role === "admin" ? "Admin" : "Trainer"}</Badge>
+            <Badge variant="default">{profile?.role ? ROLE_LABELS[profile.role] ?? profile.role : "Trainer"}</Badge>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => signOut()}>Sign Out</DropdownMenuItem>

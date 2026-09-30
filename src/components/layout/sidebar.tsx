@@ -10,7 +10,7 @@ import { useSession } from "@/lib/auth/use-session";
 export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useSession();
-  const isAdmin = profile?.role === "admin";
+  const role = profile?.role ?? null;
 
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar lg:flex">
@@ -19,7 +19,7 @@ export function Sidebar() {
       </div>
       <nav className="flex-1 overflow-y-auto px-3 pb-6">
         {NAV.map((group) => {
-          const items = group.items.filter((item) => !item.adminOnly || isAdmin);
+          const items = group.items.filter((item) => !item.roles || (role && item.roles.includes(role)));
           if (items.length === 0) return null;
           return (
             <div key={group.label} className="mb-5">
